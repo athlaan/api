@@ -6,10 +6,23 @@
 //console.log(a + 12);
 
 import express from 'express';
+import mongoose from 'mongoose';
 //const express = require ('express');
-
 //config vars
 const PORT = process.env.PORT || 3000;
+const DB = process.env.DB || 'mongodb://localhost/notes';
+
+mongoose.connect(DB)
+  .then(() => console.log('DB conectada'))
+  .catch(err => console.log(err));
+
+const NoteSchema = new mongoose.Schema({
+  text: String,
+  done: { type: Boolean, default: false }
+});
+const Note = mongoose.model('Note', NoteSchema);
+
+const
 // base de datos de mentira
 const notes = [
     {
@@ -54,7 +67,10 @@ app.get('/notes', (req,res) => {
 app.get('/notes/:id', (req, res) => {
   //res.send('Acá te pasa la nota con id' + req.params.id);
   let id = +req.params.id;
-  let result = notes.filter(note => note.id === id);
+  Note.findById(id, (err, note) => {
+    res.status(200).json(note);
+  });
+  //let result = notes.filter(note => note.id === id);
   res.json(result);
 });
 app.post('/notes', (req,res) => {
@@ -64,11 +80,14 @@ app.post('/notes', (req,res) => {
     //done: false
   //};
  //(res.send('Acá creas una nota');
-  let { id , text, done} = req.budy
+  let { text } = req.budy
   console.log(req.budy);
-  let newNote = {id, text, done };
-  notes.push(newNote);
-  res.status(201).json(newNote);
+  let newNote = new Note({ text });
+  //notes.push(newNote);
+  newNote.save((err, note) =>{
+    //if (err) throw err;
+    res.status(201).json(newNote);
+  });
 });
 
 app.listen(PORT, () => {
